@@ -109,6 +109,24 @@ BRANDS = [
         "slug": "edubridge",
         # Инструкция из бренд-кита: версии логотипа, охранное поле, шрифты.
         "guide": "edubridge-guide.pdf",
+        # Готовые оверлеи для видео (source/video/edubridge): логотип уже стоит
+        # в кадре на своём месте. Схемы guides/ — только для проверки.
+        "video": {
+            "dir": "edubridge",
+            "instruction": "instruction.md",
+            "items": [
+                {"id": "reels", "name": "Reels", "size": "1080 × 1920", "note": "Подходит и для YouTube Shorts и TikTok",
+                 "white": "reels_overlay_white.png", "color": "reels_overlay_color.png", "guide": "guides/reels_guide.png"},
+                {"id": "stories", "name": "Stories", "size": "1080 × 1920",
+                 "white": "stories_overlay_white.png", "color": "stories_overlay_color.png", "guide": "guides/stories_guide.png"},
+                {"id": "youtube-1080p", "name": "YouTube", "size": "1920 × 1080",
+                 "white": "youtube-1080p_overlay_white.png", "color": "youtube-1080p_overlay_color.png", "guide": "guides/youtube-1080p_guide.png"},
+                {"id": "youtube-4k", "name": "YouTube 4K", "size": "3840 × 2160",
+                 "white": "youtube-4k_overlay_white.png", "color": "youtube-4k_overlay_color.png", "guide": "guides/youtube-4k_guide.png"},
+                {"id": "logo", "name": "Логотип для монтажа", "size": "2000 px", "note": "Прозрачный фон, охранное поле уже заложено",
+                 "white": "logo_white_2000px.png", "color": "logo_color_2000px.png"},
+            ],
+        },
         # Фоны из брендбука edubridge (Bridge Blue, Ink, Lime).
         "bg": [
             {"key": "none", "label": "Без фона", "tag": ""},
@@ -524,6 +542,43 @@ def build_fonts(brand):
     return families
 
 
+def build_video(brand):
+    """Шаблоны для наложения в видео: копии файлов, превью и общий ZIP."""
+    cfg = brand.get("video")
+    if not cfg:
+        return None
+    src = SRC / "video" / cfg["dir"]
+    out = ASSETS / "video" / brand["id"]
+    out.mkdir(parents=True)
+    items = []
+    for it in cfg["items"]:
+        files = []
+        for key, label in (("white", "Белый"), ("color", "Цветной"), ("guide", "Схема зон")):
+            if not it.get(key):
+                continue
+            dst = out / it[key]
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src / it[key], dst)
+            files.append({"key": key, "label": label, "url": rel(dst), "size": fsize(dst)})
+        # Превью: схема зон (в ней логотип на месте), а у логотипа — он сам.
+        prev = out / "preview" / f"{it['id']}.png"
+        prev.parent.mkdir(exist_ok=True)
+        run("convert", src / (it.get("guide") or it["white"]), "-resize", "720x720>", "-strip", prev)
+        w, h = (int(v) for v in subprocess.run(["identify", "-format", "%w %h", str(src / it["white"])],
+                                               capture_output=True, text=True, check=True).stdout.split())
+        items.append({"id": it["id"], "name": it["name"], "size": it["size"], "note": it.get("note", ""),
+                      "w": w, "h": h, "logoOnly": not it.get("guide"),
+                      "preview": rel(prev), "files": files})
+    instruction = (src / cfg["instruction"]).read_text()
+    shutil.copy2(src / cfg["instruction"], out / "Инструкция.md")
+    zpath = out / f"{brand['slug']}_video-templates.zip"
+    with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted(out.rglob("*")):
+            if p.is_file() and p != zpath and "preview" not in p.parts:
+                z.write(p, f"{brand['name']} — шаблоны для видео/{p.relative_to(out).as_posix()}")
+    return {"items": items, "instruction": instruction, "zip": {"url": rel(zpath), "size": fsize(zpath)}}
+
+
 def main():
     for d in (ASSETS, DOWNLOADS):
         if d.exists():
@@ -543,6 +598,9 @@ def main():
                 g = gdir / brand["guide"]
                 shutil.copy2(SRC / "guides" / brand["guide"], g)
                 entry["guide"] = {"url": rel(g), "size": fsize(g)}
+            video = build_video(brand)
+            if video:
+                entry["video"] = video
             data["brands"].append({**entry,
                                    "logos": logos, "fonts": fonts})
 
@@ -564,6 +622,13 @@ def main():
                         arc = f"Шрифты/{fam['family']}/{p.name}"
                         z.write(p, f"{b['name']}/{arc}")
                         zall.write(p, f"WE media group — бренд-кит/{b['name']}/{arc}")
+                if b.get("video"):
+                    with zipfile.ZipFile(ROOT / b["video"]["zip"]["url"]) as vz:
+                        for name in vz.namelist():
+                            data_ = vz.read(name)
+                            arc = "Видео/" + name.split("/", 1)[1]
+                            z.writestr(f"{b['name']}/{arc}", data_)
+                            zall.writestr(f"WE media group — бренд-кит/{b['name']}/{arc}", data_)
                 if b.get("guide"):
                     g = ROOT / b["guide"]["url"]
                     z.write(g, f"{b['name']}/{g.name}")

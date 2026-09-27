@@ -274,6 +274,74 @@
     return card;
   }
 
+  // Простейший Markdown для инструкций: заголовки, списки, **жирный**, `код`.
+  function mdToHtml(md) {
+    const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const inline = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>");
+    const out = [];
+    let list = null;
+    const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
+    for (const raw of md.split("\n")) {
+      const line = raw.trim();
+      let m;
+      if (!line) { close(); continue; }
+      if (/^# /.test(line)) { close(); continue; }
+      if ((m = line.match(/^#{2,3} (.+)/))) { close(); out.push(`<h4>${inline(m[1])}</h4>`); continue; }
+      if ((m = line.match(/^[-*] (.+)/)) || (m = line.match(/^\d+\. (.+)/))) {
+        const kind = /^\d/.test(line) ? "ol" : "ul";
+        if (list !== kind) { close(); out.push(`<${kind}>`); list = kind; }
+        out.push(`<li>${inline(m[1])}</li>`);
+        continue;
+      }
+      close();
+      out.push(`<p>${inline(line)}</p>`);
+    }
+    close();
+    return out.join("");
+  }
+
+  function videoCard(item) {
+    const ratio = `${item.w} / ${item.h}`;
+    return el("article", { class: "video-card" + (item.logoOnly ? " is-logo" : "") }, [
+      el("div", { class: "video-stage" }, el("img", {
+        src: item.preview, alt: item.name + " — схема", loading: "lazy",
+        style: item.logoOnly ? null : `aspect-ratio:${ratio}`,
+      })),
+      el("div", { class: "video-foot" }, [
+        el("div", {}, [
+          el("div", { class: "logo-card-name", text: item.name }),
+          el("div", { class: "logo-card-meta", text: item.size + " · PNG без фона" + (item.note ? " · " + item.note : "") }),
+        ]),
+        el("div", { class: "video-actions" }, item.files.map((f) => el("a", {
+          class: f.key === "guide" ? "chip-dl chip-ghost" : "chip-dl",
+          href: f.url,
+          download: "",
+          title: f.key === "guide" ? "Схема зон интерфейса — только для проверки, в видео не вставлять" : `Скачать: ${f.label.toLowerCase()} · ${fmtSize(f.size)}`,
+          text: f.label,
+        }))),
+      ]),
+    ]);
+  }
+
+  function videoBlock(b) {
+    const v = b.video;
+    return el("div", { class: "video-block" }, [
+      el("div", { class: "sub-head" }, [
+        el("h3", { class: "sub-title", text: "Шаблоны для видео" }),
+        el("a", { class: "chip-dl", href: v.zip.url, download: "", text: "Все шаблоны · ZIP · " + fmtSize(v.zip.size) }),
+      ]),
+      el("p", { class: "sub-lead", text: "Прозрачный PNG размером с кадр — логотип уже стоит на своём месте. Положите на верхнюю дорожку в CapCut, Premiere, Final Cut или DaVinci и растяните на весь кадр." }),
+      el("div", { class: "video-grid" }, v.items.map(videoCard)),
+      el("details", { class: "font-styles video-howto" }, [
+        el("summary", {}, [
+          el("span", { text: "Инструкция: размеры, позиции и что нельзя" }),
+          el("span", { class: "icon icon-chevron", "aria-hidden": "true" }),
+        ]),
+        el("div", { class: "md", html: mdToHtml(v.instruction) }),
+      ]),
+    ]);
+  }
+
   function renderBrands() {
     const main = $("#brands");
     for (const b of DATA.brands) {
@@ -320,6 +388,7 @@
         logos,
         el("h3", { class: "sub-title", text: "Шрифты" }),
         fonts,
+        b.video ? videoBlock(b) : null,
       ]));
     }
     document.head.append(el("style", { text: fontFaces.join("\n") }));
