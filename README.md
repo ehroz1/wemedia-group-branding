@@ -40,5 +40,8 @@ python3 tools/build.py
 
 ## Публикация
 
+Адрес: **https://wemedia-group-branding.picta.cc** (файл `CNAME`).
+
 GitHub Pages: Settings → Pages → Deploy from a branch → ветка с сайтом,
-папка `/ (root)`.
+папка `/ (root)`. У домена picta.cc — DNS-запись
+`CNAME wemedia-group-branding → ehroz1.github.io`.
