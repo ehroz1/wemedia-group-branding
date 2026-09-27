@@ -1,38 +1,28 @@
 /* ---------- Бренд-кит WE media group ----------
-   Внешний вид — как у picta.cc: Manrope для интерфейса, Unbounded Black для
-   крупных заголовков, почти чёрный/почти белый, без теней, маленькие
-   скругления. Шрифты лежат в fonts/ (лицензия SIL OFL). */
+   Внешний вид — как у picta.cc: почти чёрный/почти белый, без теней,
+   маленькие скругления. Шрифты — фирменные шрифты WE media group:
+   Inter для интерфейса и текста, Non Bureau Extended для заголовков.
+   Файлы в fonts/ урезаны под сайт (tools/webfonts.py), лицензия SIL OFL. */
 @font-face {
-  font-family: "Manrope";
+  font-family: "Inter";
   font-style: normal;
   font-display: swap;
   font-weight: 400 700;
-  src: url("../fonts/manrope-cyrillic.woff2") format("woff2");
-  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+  src: url("../fonts/inter.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Manrope";
+  font-family: "Non Bureau Extended";
   font-style: normal;
   font-display: swap;
-  font-weight: 400 700;
-  src: url("../fonts/manrope-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  font-weight: 700;
+  src: url("../fonts/nonbureau-extended-bold.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Unbounded";
-  font-style: normal;
-  font-display: swap;
-  font-weight: 900;
-  src: url("../fonts/unbounded-black-cyrillic.woff2") format("woff2");
-  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
-}
-@font-face {
-  font-family: "Unbounded";
+  font-family: "Non Bureau Extended";
   font-style: normal;
   font-display: swap;
   font-weight: 900;
-  src: url("../fonts/unbounded-black-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+  src: url("../fonts/nonbureau-extended-black.woff2") format("woff2");
 }
 
 :root {
@@ -52,7 +42,7 @@
   --radius-sm: 5px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --font-display: "Unbounded", "Manrope", Arial, sans-serif;
+  --font-display: "Non Bureau Extended", "Inter", Arial, sans-serif;
   color-scheme: light;
 
   --icon-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cline x1='5' y1='5' x2='19' y2='19'/%3E%3Cline x1='19' y1='5' x2='5' y2='19'/%3E%3C/svg%3E");
@@ -111,7 +101,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
@@ -335,9 +325,10 @@ a { color: inherit; }
   margin: 0;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(30px, 5.4vw, 60px);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  font-size: clamp(26px, 4.8vw, 54px);
+  line-height: 1.12;
+  letter-spacing: 0;
+  word-spacing: 0.12em;
 }
 .hero-tagline {
   max-width: 600px;
@@ -381,7 +372,8 @@ a { color: inherit; }
   font-weight: 900;
   font-size: clamp(24px, 3.2vw, 36px);
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  word-spacing: 0.12em;
 }
 .section-link {
   width: 32px;
@@ -695,7 +687,8 @@ a { color: inherit; }
   font-weight: 900;
   font-size: 24px;
   line-height: 1.2;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  word-spacing: 0.12em;
 }
 .field-label { margin-bottom: 9px; font-size: 13px; font-weight: 600; }
 .field-label-note { color: var(--text-muted); font-weight: 500; }
