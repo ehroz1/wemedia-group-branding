@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бренд-кит WE media group — логотипы и шрифты</title>
+<meta name="description" content="Логотипы и фирменные шрифты всех медиаплатформ WE media group: SVG, PDF, EPS, PNG, JPG — чёрные и белые, с фоном и без.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Бренд-кит WE media group">
+<meta property="og:description" content="Логотипы и фирменные шрифты всех медиаплатформ группы — в любом формате и цвете.">
+<meta name="theme-color" content="#0b0b0f">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<!-- Тема до отрисовки, чтобы не было вспышки светлого фона. -->
+<script>
+  try {
+    var t = localStorage.getItem("brandkit-theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
+<link rel="preload" href="fonts/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/unbounded-black-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+<div class="app" id="top">
+  <header class="topbar" id="topbar">
+    <a class="brand" href="#top" aria-label="WE media group — наверх"><span class="brand-mark"></span></a>
+    <nav class="platform-nav" id="platformNav" aria-label="Платформы"></nav>
+    <div class="topbar-actions">
+      <div class="seg" id="themeSeg" role="group" aria-label="Тема">
+        <button type="button" class="seg-btn" data-theme-set="light" title="Светлая тема" aria-pressed="false"><span class="icon icon-sun" aria-hidden="true"></span></button>
+        <button type="button" class="seg-btn" data-theme-set="dark" title="Тёмная тема" aria-pressed="false"><span class="icon icon-moon" aria-hidden="true"></span></button>
+        <button type="button" class="seg-btn" data-theme-set="auto" title="Как в системе" aria-pressed="false"><span class="icon icon-auto" aria-hidden="true"></span></button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <p class="hero-kicker">Бренд-кит</p>
+    <h1 class="hero-title">Логотипы и&nbsp;шрифты <span class="nowrap">WE media group</span></h1>
+    <p class="hero-tagline">Все медиаплатформы группы в&nbsp;одном месте. Вектор и&nbsp;растр, чёрный, белый и&nbsp;любой свой цвет, с&nbsp;фоном и&nbsp;без&nbsp;— плюс фирменные шрифты.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" id="downloadAll" download>
+        <span class="icon icon-download" aria-hidden="true"></span>
+        <span>Скачать весь бренд-кит</span>
+        <span class="btn-meta" id="downloadAllSize"></span>
+      </a>
+    </div>
+    <div class="hero-stats" id="heroStats"></div>
+  </section>
+
+  <main id="brands"></main>
+
+  <footer class="footer">
+    <p>WE media group · бренд-кит. Логотипы — собственность компаний группы. Шрифты распространяются по&nbsp;лицензиям их&nbsp;авторов.</p>
+    <a class="footer-top" href="#top">Наверх</a>
+  </footer>
+</div>
+
+<!-- Окно «настроить и скачать» для одного логотипа. -->
+<div class="modal" id="logoModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button type="button" class="icon-btn modal-close" data-close aria-label="Закрыть"><span class="icon icon-close" aria-hidden="true"></span></button>
+    <div class="modal-stage" id="modalStage">
+      <div class="modal-stage-inner" id="modalPreview"></div>
+    </div>
+    <div class="modal-side">
+      <p class="modal-kicker" id="modalBrand"></p>
+      <h2 class="modal-title" id="modalTitle"></h2>
+
+      <div class="field">
+        <div class="field-label">Цвет логотипа</div>
+        <div class="swatches" id="fgSwatches"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Фон</div>
+        <div class="swatches" id="bgSwatches"></div>
+      </div>
+      <div class="field">
+        <div class="field-label">Формат</div>
+        <div class="format-tabs" id="formatTabs" role="group"></div>
+        <p class="field-hint" id="formatHint"></p>
+      </div>
+      <div class="field" id="sizeField">
+        <div class="field-label">Размер <span class="field-label-note">по длинной стороне</span></div>
+        <div class="size-row" id="sizeRow"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary btn-lg btn-block" id="modalDownload">
+          <span class="icon icon-download" aria-hidden="true"></span>
+          <span id="modalDownloadLabel">Скачать</span>
+        </button>
+        <div class="modal-actions-row">
+          <a class="btn btn-secondary" id="modalZip" download>
+            <span class="icon icon-layers" aria-hidden="true"></span>
+            <span>Все форматы · ZIP</span>
+          </a>
+          <button type="button" class="btn btn-secondary" id="modalCopyLink" title="Ссылка на этот файл">
+            <span class="icon icon-link" aria-hidden="true"></span>
+            <span>Ссылка</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
