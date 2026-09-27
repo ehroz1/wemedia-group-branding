@@ -32,10 +32,14 @@ SRC = ROOT / "source"
 ASSETS = ROOT / "assets"
 DOWNLOADS = ROOT / "downloads"
 
-# Цвет-заглушка в шаблоне SVG, вместо него подставляется нужный цвет.
-PLACEHOLDER = "#C0FFEE"
+# Цвета-заглушки в шаблоне SVG: #C0FF00 — первый цвет логотипа, #C0FF01 —
+# второй и т.д. Вместо них подставляются цвета нужной версии.
+def ph(i: int) -> str:
+    return "#C0FF%02X" % i
 WHITE = "#FFFFFF"
 BLACK = "#000000"
+# Цвета edubridge из брендбука.
+EB_BLUE, EB_INK, EB_LIME, EB_LIGHT = "#0A34F5", "#121418", "#C8F169", "#5C7CFF"
 PNG_SIZE = 4000  # длинная сторона готовых PNG/JPG, px
 PAD = 0.2  # поле вокруг логотипа в вариантах с фоном, доля длинной стороны
 
@@ -99,15 +103,89 @@ BRANDS = [
             {"family": "Gotham Pro", "dir": "GothamPro", "glob": "*.ttf", "license": "commercial"},
         ],
     },
+    {
+        "id": "edubridge",
+        "name": "edubridge",
+        "slug": "edubridge",
+        # Инструкция из бренд-кита: версии логотипа, охранное поле, шрифты.
+        "guide": "edubridge-guide.pdf",
+        # Фоны из брендбука edubridge (Bridge Blue, Ink, Lime).
+        "bg": [
+            {"key": "none", "label": "Без фона", "tag": ""},
+            {"key": "white", "label": "Белый", "tag": "white", "color": WHITE},
+            {"key": "blue", "label": "Bridge Blue", "tag": "blue", "color": EB_BLUE},
+            {"key": "ink", "label": "Ink", "tag": "ink", "color": EB_INK},
+            {"key": "lime", "label": "Lime", "tag": "lime", "color": EB_LIME},
+        ],
+        "darkBg": "ink",
+        "logos": [
+            {
+                "id": "edubridge", "name": "edubridge", "src": "edubridge.svg", "file": "edubridge-logo",
+                # Пять версий из брендбука: основная, на синем (всё белое),
+                # на тёмном (дуга Bridge Light), монохромные Ink и белая.
+                "fg": [
+                    {"key": "brand", "label": "Основной", "tag": "main"},
+                    {"key": "dark", "label": "Для тёмного фона", "tag": "for-dark",
+                     "map": {EB_INK: WHITE, EB_BLUE: EB_LIGHT}},
+                    {"key": "white", "label": "Белый", "tag": "white", "color": WHITE},
+                    {"key": "ink", "label": "Ink", "tag": "ink", "color": EB_INK},
+                ],
+                "variants": [("brand", "none"), ("brand", "white"), ("white", "blue"), ("dark", "none"),
+                             ("dark", "ink"), ("ink", "none"), ("ink", "lime"), ("white", "none")],
+                "onDark": "dark",
+            },
+            {
+                "id": "edubridge-arc", "name": "Знак-дуга", "src": "edubridge-arc.svg", "file": "edubridge-arc",
+                "fg": [
+                    {"key": "brand", "label": "Bridge Blue", "tag": "blue"},
+                    {"key": "white", "label": "Белый", "tag": "white", "color": WHITE},
+                    {"key": "ink", "label": "Ink", "tag": "ink", "color": EB_INK},
+                    {"key": "lime", "label": "Lime", "tag": "lime", "color": EB_LIME},
+                ],
+                "variants": [("brand", "none"), ("white", "none"), ("ink", "none"), ("lime", "none"),
+                             ("white", "blue"), ("lime", "ink"), ("brand", "white")],
+            },
+            {
+                "id": "edubridge-avatar", "name": "Аватар", "src": "edubridge-avatar.svg", "file": "edubridge-avatar",
+                "fg": [
+                    {"key": "brand", "label": "Основной", "tag": "main"},
+                    {"key": "light", "label": "Светлый", "tag": "light", "map": {EB_BLUE: WHITE, WHITE: EB_BLUE}},
+                ],
+                "bg": [{"key": "none", "label": "Без фона", "tag": ""}],
+                "variants": [("brand", "none"), ("light", "none")],
+                "onDark": "brand",
+                "custom": False,
+            },
+            {
+                "id": "edubridge-favicon", "name": "Фавикон и иконка приложения", "src": "edubridge-favicon.svg",
+                "file": "edubridge-favicon",
+                "fg": [{"key": "brand", "label": "Основной", "tag": "main"}],
+                "bg": [{"key": "none", "label": "Без фона", "tag": ""}],
+                "variants": [("brand", "none")],
+                "onDark": "brand",
+                "custom": False,
+            },
+        ],
+        "fonts": [
+            {"family": "Onest", "dir": "Onest", "glob": "*.ttf", "license": "OFL"},
+            {"family": "Unbounded", "dir": "Unbounded", "glob": "*.ttf", "license": "OFL"},
+        ],
+    },
 ]
 
-# Варианты логотипа: цвет знака и фон (None — прозрачный).
-VARIANTS = [
-    {"id": "black", "label": "Чёрный, без фона", "fg": "brand", "bg": None},
-    {"id": "white", "label": "Белый, без фона", "fg": WHITE, "bg": None},
-    {"id": "black-on-white", "label": "Чёрный на белом", "fg": "brand", "bg": WHITE},
-    {"id": "white-on-black", "label": "Белый на чёрном", "fg": WHITE, "bg": BLACK},
+# Версии логотипа по умолчанию. fg — «цвет знака»: brand (фирменные цвета
+# исходника) или один цвет на всё; bg — фон (none — прозрачный). tag идёт в
+# имя файла. Бренд или логотип может задать свои списки (см. edubridge).
+FG_DEFAULT = [
+    {"key": "brand", "label": "Фирменный", "tag": "black"},
+    {"key": "white", "label": "Белый", "tag": "white", "color": WHITE},
 ]
+BG_DEFAULT = [
+    {"key": "none", "label": "Без фона", "tag": ""},
+    {"key": "white", "label": "Белый", "tag": "white", "color": WHITE},
+    {"key": "black", "label": "Чёрный", "tag": "black", "color": BLACK},
+]
+VARIANTS_DEFAULT = [("brand", "none"), ("white", "none"), ("brand", "white"), ("white", "black")]
 
 # Трассировка растровых логотипов: во сколько раз увеличить перед potrace
 # и насколько размыть (сглаживает «лесенку» пикселей).
@@ -162,38 +240,72 @@ def detect_color(svg_text: str) -> str:
     return "#000000" if c == WHITE else c
 
 
-def to_template(plain: Path) -> tuple[str, float, float]:
-    """Одноцветный шаблон: все цвета → PLACEHOLDER, viewBox от 0,0."""
+def norm_color(v: str) -> str | None:
+    v = v.strip()
+    if v in ("none", "transparent", "currentColor") or v.startswith("url("):
+        return None
+    if v.startswith("rgb"):
+        parts = [p.strip() for p in v[v.index("(") + 1:-1].split(",")]
+        vals = [round(float(p[:-1]) * 2.55) if p.endswith("%") else int(p) for p in parts[:3]]
+        return "#%02X%02X%02X" % tuple(vals)
+    if re.fullmatch(r"#[0-9a-fA-F]{3}", v):
+        v = "#" + "".join(ch * 2 for ch in v[1:])
+    return v.upper() if v.startswith("#") else {"white": WHITE, "black": BLACK}.get(v.lower(), v)
+
+
+def to_template(plain: Path) -> tuple[str, float, float, list[str]]:
+    """Шаблон: каждый цвет исходника → своя заглушка ph(i), viewBox от 0,0.
+    Возвращает ещё список исходных цветов в порядке заглушек."""
     ET.register_namespace("", "http://www.w3.org/2000/svg")
     tree = ET.parse(plain)
     root = tree.getroot()
     vb = [float(v) for v in root.get("viewBox").split()]
-    for el in root.iter():
-        for attr in ("fill", "stroke"):
-            v = el.get(attr)
-            if v and v not in ("none", "transparent"):
-                el.set(attr, PLACEHOLDER)
-        style = el.get("style")
-        if style:
-            style = re.sub(r"(fill|stroke):\s*(?!none)[^;]+", lambda m: f"{m.group(1)}:{PLACEHOLDER}", style)
-            el.set("style", style)
-        for attr in list(el.attrib):
-            if attr in ("id",) or attr.startswith("{http://www.inkscape.org") or attr.startswith("{http://sodipodi"):
-                del el.attrib[attr]
+    palette: list[str] = []
+
+    def slot(v: str) -> str:
+        c = norm_color(v)
+        if c is None:
+            return v
+        if c not in palette:
+            palette.append(c)
+        return ph(palette.index(c))
+
     # Корень с fill="none" (так в исходнике WE media group) — снимаем, иначе
     # элементы без своего fill пропадут.
     if root.get("fill") == "none":
         del root.attrib["fill"]
-    root.set("fill", PLACEHOLDER)
+    for el in root.iter():
+        for attr in ("fill", "stroke"):
+            v = el.get(attr)
+            if v:
+                el.set(attr, slot(v))
+        style = el.get("style")
+        if style:
+            style = re.sub(r"(fill|stroke):\s*([^;]+)", lambda m: f"{m.group(1)}:{slot(m.group(2))}", style)
+            el.set("style", style)
+        for attr in list(el.attrib):
+            if attr in ("id",) or attr.startswith("{http://www.inkscape.org") or attr.startswith("{http://sodipodi"):
+                del el.attrib[attr]
+    if not palette:
+        palette.append(BLACK)
+    if not root.get("fill"):
+        root.set("fill", ph(0))
     inner = "".join(ET.tostring(ch, encoding="unicode") for ch in root)
     inner = re.sub(r'\sxmlns(:\w+)?="[^"]+"', "", inner)
+    # fill корня переносим на обёртку — у шаблона свой корень.
     w, h = vb[2], vb[3]
-    body = f'<g transform="translate({-vb[0]:.4f} {-vb[1]:.4f})">{inner}</g>'
-    return body, w, h
+    body = f'<g fill="{root.get("fill")}" transform="translate({-vb[0]:.4f} {-vb[1]:.4f})">{inner}</g>'
+    return body, w, h, palette
 
 
-def svg_doc(body: str, w: float, h: float, fg: str, bg: str | None) -> str:
-    content = body.replace(PLACEHOLDER, fg)
+def paint(body: str, colors: list[str] | None) -> str:
+    if colors is None:
+        return body
+    return re.sub(r"#C0FF([0-9A-F]{2})", lambda m: colors[int(m.group(1), 16)], body)
+
+
+def svg_doc(body: str, w: float, h: float, colors: list[str] | None, bg: str | None) -> str:
+    content = paint(body, colors)
     if bg is None:
         return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:.2f}" height="{h:.2f}" '
                 f'viewBox="0 0 {w:.4f} {h:.4f}">{content}</svg>')
@@ -236,7 +348,23 @@ def build_logo(brand, logo, tmp: Path):
         trace(src, plain, tmp)
         color = "#000000"
 
-    body, w, h = to_template(plain)
+    body, w, h, source_palette = to_template(plain)
+    # Фирменные цвета: у одноцветного логотипа — «фирменный чёрный» из
+    # исходника, у многоцветного — все его цвета как есть.
+    brand_colors = source_palette if len(source_palette) > 1 else [color]
+    n = len(brand_colors)
+
+    def resolve(preset):
+        if "color" in preset:
+            return [preset["color"]] * n
+        if "map" in preset:
+            return [preset["map"].get(c, c) for c in source_palette]
+        return list(brand_colors)
+
+    fg_presets = [{**p, "colors": resolve(p)} for p in logo.get("fg", FG_DEFAULT)]
+    bg_presets = logo.get("bg", brand.get("bg", BG_DEFAULT))
+    fg_by, bg_by = {p["key"]: p for p in fg_presets}, {p["key"]: p for p in bg_presets}
+
     out = ASSETS / "logos" / logo["id"]
     if out.exists():
         shutil.rmtree(out)
@@ -244,31 +372,30 @@ def build_logo(brand, logo, tmp: Path):
     base = logo.get("file", logo["id"])
 
     variants = {}
-    for v in VARIANTS:
-        fg = color if v["fg"] == "brand" else v["fg"]
-        bg = color if v["bg"] == "brand" else v["bg"]
-        stem = out / f"{base}_{v['id']}"
+    for fg_key, bg_key in logo.get("variants", VARIANTS_DEFAULT):
+        fgp, bgp = fg_by[fg_key], bg_by[bg_key]
+        colors, bg = fgp["colors"], bgp.get("color")
+        vid = fgp["tag"] + (f"-on-{bgp['tag']}" if bg else "")
+        stem = out / f"{base}_{vid}"
         svg = stem.with_suffix(".svg")
-        svg.write_text(svg_doc(body, w, h, fg, bg))
+        svg.write_text(svg_doc(body, w, h, colors, bg))
         run("svgo", "-q", "--multipass", "-i", svg, "-o", svg)
         pdf, eps, png = stem.with_suffix(".pdf"), stem.with_suffix(".eps"), stem.with_suffix(".png")
         run("inkscape", svg, "--export-type=pdf", "--export-text-to-path", "-o", pdf)
         run("inkscape", svg, "--export-type=eps", "--export-text-to-path", "-o", eps)
         sw = w + (2 * PAD * max(w, h) if bg else 0)
         sh = h + (2 * PAD * max(w, h) if bg else 0)
-        pw, ph = raster_size(sw, sh, PNG_SIZE)
-        run("rsvg-convert", "-w", pw, "-h", ph, svg, "-o", png)
+        pw, ph_ = raster_size(sw, sh, PNG_SIZE)
+        run("rsvg-convert", "-w", pw, "-h", ph_, svg, "-o", png)
         files = {"svg": svg, "pdf": pdf, "eps": eps, "png": png}
         if bg:
             jpg = stem.with_suffix(".jpg")
             run("convert", png, "-background", bg, "-flatten", "-quality", "92", jpg)
             files["jpg"] = jpg
-        variants[v["id"]] = {
-            "fg": fg,
-            "bg": bg,
-            "w": round(sw, 2),
-            "h": round(sh, 2),
-            "px": [pw, ph],
+        variants[vid] = {
+            "fg": fg_key,
+            "bg": bg_key,
+            "px": [pw, ph_],
             "files": {k: {"url": rel(f), "size": fsize(f)} for k, f in files.items()},
         }
 
@@ -279,16 +406,21 @@ def build_logo(brand, logo, tmp: Path):
             for fmt, f in v["files"].items():
                 z.write(ROOT / f["url"], f"{logo['name'].replace('—', '-')}/{fmt.upper()}/{Path(f['url']).name}")
 
-    # Шаблон для раскраски в свой цвет прямо на странице.
+    # Шаблон — для раскраски в свой цвет и предпросмотра прямо на странице.
     return {
         "id": logo["id"],
         "name": logo["name"],
+        "file": base,
         "traced": bool(logo.get("traced")),
-        "color": color,
         "w": round(w, 2),
         "h": round(h, 2),
         "pad": PAD,
-        "template": svg_doc(body, w, h, PLACEHOLDER, None),
+        "template": svg_doc(body, w, h, None, None),
+        "fg": [{k: p[k] for k in ("key", "label", "tag", "colors")} for p in fg_presets],
+        "bg": [{"key": p["key"], "label": p["label"], "tag": p["tag"], "color": p.get("color")} for p in bg_presets],
+        "onDark": logo.get("onDark", "white"),
+        "darkBg": logo.get("darkBg", brand.get("darkBg", "black")),
+        "custom": logo.get("custom", True),
         "variants": variants,
         "zip": {"url": rel(zpath), "size": fsize(zpath)},
     }
@@ -404,7 +536,14 @@ def main():
             logos = [build_logo(brand, l, tmp) for l in brand["logos"]]
             fonts = build_fonts(brand)
             print(f"✓ {brand['name']}: логотипов {len(logos)}, семейств шрифтов {len(fonts)}")
-            data["brands"].append({"id": brand["id"], "name": brand["name"], "slug": brand["slug"],
+            entry = {"id": brand["id"], "name": brand["name"], "slug": brand["slug"]}
+            if brand.get("guide"):
+                gdir = ASSETS / "guides"
+                gdir.mkdir(exist_ok=True)
+                g = gdir / brand["guide"]
+                shutil.copy2(SRC / "guides" / brand["guide"], g)
+                entry["guide"] = {"url": rel(g), "size": fsize(g)}
+            data["brands"].append({**entry,
                                    "logos": logos, "fonts": fonts})
 
     # ZIP по платформе: все логотипы во всех видах + шрифты.
@@ -425,6 +564,10 @@ def main():
                         arc = f"Шрифты/{fam['family']}/{p.name}"
                         z.write(p, f"{b['name']}/{arc}")
                         zall.write(p, f"WE media group — бренд-кит/{b['name']}/{arc}")
+                if b.get("guide"):
+                    g = ROOT / b["guide"]["url"]
+                    z.write(g, f"{b['name']}/{g.name}")
+                    zall.write(g, f"WE media group — бренд-кит/{b['name']}/{g.name}")
             b["zip"] = {"url": rel(zpath), "size": fsize(zpath)}
     data["zip"] = {"url": rel(everything), "size": fsize(everything)}
 

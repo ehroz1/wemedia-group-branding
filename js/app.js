@@ -2,9 +2,9 @@
   "use strict";
 
   const DATA = window.BRANDKIT;
-  const PLACEHOLDER = /#C0FFEE/gi;
-  const WHITE = "#FFFFFF";
-  const BLACK = "#000000";
+  // В шаблоне логотипа цвета — заглушки #C0FF00, #C0FF01…: номер цвета
+  // исходника. Вместо них подставляются цвета выбранной версии.
+  const SLOT = /#C0FF([0-9A-F]{2})/gi;
   const SIZES = [512, 1000, 2000, 4000];
   const MAX_SIZE = 8000;
   const FORMATS = [
@@ -89,22 +89,24 @@
     const pad = logo.pad * Math.max(logo.w, logo.h);
     return { w: logo.w + 2 * pad, h: logo.h + 2 * pad, pad };
   }
-  function buildSvg(logo, fg, bg, px) {
+  function paint(logo, colors) {
+    return svgInner(logo).replace(SLOT, (m, i) => colors[parseInt(i, 16)] || colors[0]);
+  }
+  function buildSvg(logo, colors, bg, px) {
     const box = logoBox(logo, !!bg);
-    const inner = svgInner(logo).replace(PLACEHOLDER, fg);
+    const inner = paint(logo, colors);
     const size = px ? ` width="${px[0]}" height="${px[1]}"` : ` width="${box.w}" height="${box.h}"`;
     const head = `<svg xmlns="http://www.w3.org/2000/svg"${size} viewBox="0 0 ${box.w} ${box.h}">`;
     if (!bg) return head + inner + "</svg>";
     return head + `<rect width="${box.w}" height="${box.h}" fill="${bg}"/>` +
       `<g transform="translate(${box.pad} ${box.pad})">${inner}</g></svg>`;
   }
-  function previewSvg(logo) {
-    return svgInner(logo).replace(PLACEHOLDER, "currentColor");
+  function inlineSvg(logo, colors, cls) {
+    return `<svg xmlns="http://www.w3.org/2000/svg"${cls ? ` class="${cls}"` : ""} viewBox="0 0 ${logo.w} ${logo.h}" width="${logo.w}" height="${logo.h}" role="img" aria-label="${logo.name}">` +
+      paint(logo, colors) + "</svg>";
   }
-  function inlineSvg(logo, color) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${logo.w} ${logo.h}" width="${logo.w}" height="${logo.h}" role="img" aria-label="${logo.name}">` +
-      (color ? svgInner(logo).replace(PLACEHOLDER, color) : previewSvg(logo)) + "</svg>";
-  }
+  const fgPreset = (logo, key) => logo.fg.find((p) => p.key === key) || logo.fg[0];
+  const bgPreset = (logo, key) => logo.bg.find((p) => p.key === key) || logo.bg[0];
   function luminance(hex) {
     const n = parseInt(hex.slice(1), 16);
     return (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
@@ -163,12 +165,15 @@
   }
 
   function logoCard(brand, logo) {
-    const card = el("article", { class: "logo-card", "data-look": "theme", style: `--logo-brand:${logo.color}` });
+    const card = el("article", { class: "logo-card", "data-look": "theme", style: `--dark-bg:${bgPreset(logo, logo.darkBg).color || "#000"}` });
     const stage = el("button", {
       type: "button",
       class: "logo-stage",
       "aria-label": `${logo.name}: настроить и скачать`,
-      html: inlineSvg(logo) + '<span class="logo-stage-cta">Настроить и скачать</span>',
+      // Две картинки: фирменные цвета (светлый фон) и версия для тёмного
+      // фона — какую показать, решает CSS по теме и выбранному фону карточки.
+      html: inlineSvg(logo, fgPreset(logo, "brand").colors, "v-light") +
+        inlineSvg(logo, fgPreset(logo, logo.onDark).colors, "v-dark") + '<span class="logo-stage-cta">Настроить и скачать</span>',
       onclick: () => openModal(brand, logo, card),
     });
     const looks = el("div", { class: "look-switch", role: "group", "aria-label": "Фон предпросмотра" });
@@ -294,10 +299,17 @@
             text: `${nl} ${plural(nl, "логотип", "логотипа", "логотипов")} · ${nf} ${plural(nf, "шрифт", "шрифта", "шрифтов")}: ${b.fonts.map((f) => f.family).join(", ")}`,
           }),
         ]),
-        el("a", { class: "btn btn-ghost", href: b.zip.url, download: "" }, [
-          el("span", { class: "icon icon-download", "aria-hidden": "true" }),
-          el("span", { text: "Всё для " + b.name }),
-          el("span", { class: "btn-meta", text: "ZIP · " + fmtSize(b.zip.size) }),
+        el("div", { class: "section-actions" }, [
+          b.guide ? el("a", { class: "btn btn-ghost", href: b.guide.url, target: "_blank", rel: "noopener", title: "Правила использования логотипа и шрифтов" }, [
+            el("span", { class: "icon icon-layers", "aria-hidden": "true" }),
+            el("span", { text: "Инструкция" }),
+            el("span", { class: "btn-meta", text: "PDF · " + fmtSize(b.guide.size) }),
+          ]) : null,
+          el("a", { class: "btn btn-ghost", href: b.zip.url, download: "" }, [
+            el("span", { class: "icon icon-download", "aria-hidden": "true" }),
+            el("span", { text: "Всё для " + b.name }),
+            el("span", { class: "btn-meta", text: "ZIP · " + fmtSize(b.zip.size) }),
+          ]),
         ]),
       ]);
       const logos = el("div", { class: "logo-grid" }, b.logos.map((l) => logoCard(b, l)));
@@ -317,30 +329,25 @@
   const modal = $("#logoModal");
   const state = { brand: null, logo: null, fg: "brand", fgCustom: "#E5484D", bg: "none", bgCustom: "#F2EEE6", format: "svg", size: 4000, customSize: "", returnFocus: null };
 
-  function fgHex() {
-    if (state.fg === "brand") return state.logo.color;
-    if (state.fg === "white") return WHITE;
-    return state.fgCustom.toUpperCase();
+  function fgColors() {
+    const n = state.logo.fg[0].colors.length;
+    if (state.fg === "custom") return Array(n).fill(state.fgCustom.toUpperCase());
+    return fgPreset(state.logo, state.fg).colors;
   }
   function bgHex() {
-    if (state.bg === "none") return null;
-    if (state.bg === "white") return WHITE;
-    if (state.bg === "black") return BLACK;
-    return state.bgCustom.toUpperCase();
+    if (state.bg === "custom") return state.bgCustom.toUpperCase();
+    return bgPreset(state.logo, state.bg).color || null;
   }
-  // Готовый файл на сервере для текущего сочетания цветов (или null).
+  // Готовый файл на сервере для текущей версии (или null).
   function staticVariant() {
-    const fg = fgHex(), bg = bgHex();
-    for (const [id, v] of Object.entries(state.logo.variants)) {
-      if (v.fg.toUpperCase() === fg && (v.bg ? v.bg.toUpperCase() : null) === bg) return { id, ...v };
-    }
-    return null;
+    return Object.values(state.logo.variants).find((v) => v.fg === state.fg && v.bg === state.bg) || null;
   }
   function currentSize() {
     const n = parseInt(state.customSize, 10);
     if (state.customSize && n > 0) return Math.min(MAX_SIZE, Math.max(16, n));
     return state.size;
   }
+  const NO_VECTOR = "PDF и EPS готовы только для фирменных версий логотипа. Для этого сочетания возьмите SVG — он тоже векторный.";
   function formatAvailability() {
     const sv = staticVariant();
     const bg = bgHex();
@@ -348,15 +355,22 @@
       svg: { ok: true },
       png: { ok: true },
       jpg: bg ? { ok: true } : { ok: false, why: "JPG не бывает прозрачным — выберите фон, чтобы скачать JPG." },
-      pdf: sv ? { ok: true } : { ok: false, why: "PDF и EPS готовы для фирменного чёрного и белого (с фоном и без). Для своего цвета возьмите SVG — он тоже векторный." },
-      eps: sv ? { ok: true } : { ok: false, why: "PDF и EPS готовы для фирменного чёрного и белого (с фоном и без). Для своего цвета возьмите SVG — он тоже векторный." },
+      pdf: sv ? { ok: true } : { ok: false, why: NO_VECTOR },
+      eps: sv ? { ok: true } : { ok: false, why: NO_VECTOR },
     };
   }
 
+  // Кружок версии: один цвет или несколько секторами.
+  function dotFill(colors) {
+    const list = [].concat(colors).filter((c, i, a) => a.indexOf(c) === i);
+    if (list.length === 1) return list[0];
+    const step = 100 / list.length;
+    return "linear-gradient(135deg," + list.map((c, i) => `${c} ${i * step}% ${(i + 1) * step}%`).join(",") + ")";
+  }
   function swatch({ key, group, label, color, pressed, kind, hex }) {
     const dotClass = "swatch-dot" + (kind === "none" ? " is-none" : "") + (kind === "custom" ? " is-custom" + (pressed ? " has-color" : "") : "");
     const btn = el("button", { type: "button", class: "swatch", "aria-pressed": pressed ? "true" : "false", "data-key": key }, [
-      el("span", { class: dotClass, style: color ? `--c:${color}` : null }),
+      el("span", { class: dotClass, style: color ? `--c:${dotFill(color)}` : null }),
       el("span", { text: label }),
       hex ? el("span", { class: "swatch-hex", text: hex }) : null,
     ]);
@@ -383,19 +397,25 @@
   }
 
   function renderSwatches() {
-    const fg = $("#fgSwatches");
-    fg.replaceChildren(
-      swatch({ key: "brand", group: "fg", label: "Фирменный", color: state.logo.color, pressed: state.fg === "brand", hex: state.logo.color }),
-      swatch({ key: "white", group: "fg", label: "Белый", color: WHITE, pressed: state.fg === "white" }),
-      swatch({ key: "custom", group: "fg", label: "Свой", color: state.fgCustom, pressed: state.fg === "custom", kind: "custom", hex: state.fg === "custom" ? state.fgCustom.toUpperCase() : null }),
+    const logo = state.logo;
+    const custom = (group) => {
+      const val = group === "fg" ? state.fgCustom : state.bgCustom;
+      const on = state[group] === "custom";
+      return swatch({ key: "custom", group, label: "Свой", color: val, pressed: on, kind: "custom", hex: on ? val.toUpperCase() : null });
+    };
+    const single = (p) => new Set(p.colors).size === 1;
+    $("#fgSwatches").replaceChildren(
+      ...logo.fg.map((p) => swatch({
+        key: p.key, group: "fg", label: p.label, color: p.colors, pressed: state.fg === p.key,
+        hex: p.key === "brand" && single(p) && p.colors[0] !== "#FFFFFF" ? p.colors[0] : null,
+      })),
+      logo.custom ? custom("fg") : "",
     );
-    const bg = $("#bgSwatches");
-    bg.replaceChildren(
-      swatch({ key: "none", group: "bg", label: "Без фона", pressed: state.bg === "none", kind: "none" }),
-      swatch({ key: "white", group: "bg", label: "Белый", color: WHITE, pressed: state.bg === "white" }),
-      swatch({ key: "black", group: "bg", label: "Чёрный", color: BLACK, pressed: state.bg === "black" }),
-      swatch({ key: "custom", group: "bg", label: "Свой", color: state.bgCustom, pressed: state.bg === "custom", kind: "custom", hex: state.bg === "custom" ? state.bgCustom.toUpperCase() : null }),
+    $("#bgSwatches").replaceChildren(
+      ...logo.bg.map((p) => swatch({ key: p.key, group: "bg", label: p.label, color: p.color, pressed: state.bg === p.key, kind: p.color ? null : "none" })),
+      logo.custom ? custom("bg") : "",
     );
+    $("#bgSwatches").parentElement.hidden = logo.bg.length < 2 && !logo.custom;
   }
 
   function renderFormats() {
@@ -469,10 +489,12 @@
       const f = sv.files[fmt];
       return { url: f.url, name: basename(f.url), size: f.size };
     }
-    const fg = fgHex(), bg = bgHex();
-    const base = basename(Object.values(state.logo.variants)[0].files.svg.url).replace(/_[a-z-]+\.svg$/, "");
-    const tag = (c) => c.replace("#", "").toLowerCase();
-    const colorPart = (fg === WHITE ? "white" : fg === state.logo.color ? "black" : tag(fg)) + (bg ? "-on-" + (bg === WHITE ? "white" : bg === BLACK ? "black" : tag(bg)) : "");
+    const fg = fgColors(), bg = bgHex();
+    const base = state.logo.file;
+    const hex = (c) => c.replace("#", "").toLowerCase();
+    const fgTag = state.fg === "custom" ? hex(fg[0]) : fgPreset(state.logo, state.fg).tag;
+    const bgTag = state.bg === "custom" ? hex(bg) : bgPreset(state.logo, state.bg).tag;
+    const colorPart = fgTag + (bg ? "-on-" + bgTag : "");
     if (fmt === "svg") {
       return { make: () => new Blob([buildSvg(state.logo, fg, bg)], { type: "image/svg+xml" }), name: `${base}_${colorPart}.svg` };
     }
@@ -488,14 +510,15 @@
     $("#modalDownloadLabel").textContent = `Скачать ${state.format.toUpperCase()}` + (p.size ? ` · ${fmtSize(p.size)}` : "");
     const link = $("#modalCopyLink");
     link.disabled = !p.url;
-    link.title = p.url ? "Скопировать прямую ссылку на файл" : "Прямая ссылка есть только у готовых файлов (фирменный чёрный и белый, 4000 px)";
+    link.title = p.url ? "Скопировать прямую ссылку на файл" : "Прямая ссылка есть только у готовых файлов (фирменные версии, 4000 px)";
   }
 
   function renderPreview() {
-    const fg = fgHex(), bg = bgHex();
+    const fg = fgColors(), bg = bgHex();
     const stage = $("#modalStage");
     stage.classList.toggle("is-transparent", !bg);
-    stage.dataset.contrast = luminance(fg) > 0.5 ? "dark" : "light";
+    const lum = fg.reduce((sum, c) => sum + luminance(c), 0) / fg.length;
+    stage.dataset.contrast = lum > 0.5 ? "dark" : "light";
     stage.style.background = bg || "";
     $("#modalPreview").innerHTML = inlineSvg(state.logo, fg);
   }
@@ -514,9 +537,10 @@
     state.returnFocus = document.activeElement;
     // Стартовое сочетание — как на карточке: белый на чёрном и т.п.
     const look = card ? card.dataset.look : "theme";
-    if (look === "light") { state.fg = "brand"; state.bg = "white"; }
-    else if (look === "dark") { state.fg = "white"; state.bg = "black"; }
-    else { state.fg = "brand"; state.bg = "none"; }
+    const has = (key) => logo.bg.some((p) => p.key === key);
+    if (look === "light" && has("white")) { state.fg = "brand"; state.bg = "white"; }
+    else if (look === "dark" && has(logo.darkBg)) { state.fg = logo.onDark; state.bg = logo.darkBg; }
+    else { state.fg = "brand"; state.bg = logo.bg[0].key; }
     state.format = "svg";
     $("#modalBrand").textContent = brand.name === logo.name ? "" : brand.name;
     $("#modalTitle").textContent = logo.name;

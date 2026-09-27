@@ -393,6 +393,7 @@ a { color: inherit; }
 .section-link:focus-visible { opacity: 1; }
 .section-link:hover { background: var(--accent-soft); color: var(--text); }
 .section-link .icon { width: 16px; height: 16px; }
+.section-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .section-meta { margin: 8px 0 0; color: var(--text-muted); font-size: 14px; }
 
 .sub-title {
@@ -444,8 +445,19 @@ a { color: inherit; }
 .logo-stage:hover svg { transform: scale(1.04); }
 /* Предпросмотр на карточке можно переключать: как в теме / белый фон /
    чёрный фон (кнопки в углу карточки). */
-.logo-card[data-look="light"] .logo-stage { background: #ffffff; color: var(--logo-brand, #000); }
-.logo-card[data-look="dark"] .logo-stage { background: #000000; color: #ffffff; }
+.logo-card[data-look="light"] .logo-stage { background: #ffffff; }
+.logo-card[data-look="dark"] .logo-stage { background: var(--dark-bg, #000); }
+/* В карточке две картинки: .v-light — фирменные цвета, .v-dark — версия
+   для тёмного фона. Показываем одну — по теме или выбранному фону. */
+.logo-stage .v-dark { display: none; }
+.logo-card[data-look="dark"] .v-light { display: none; }
+.logo-card[data-look="dark"] .v-dark { display: block; }
+:root[data-theme="dark"] .logo-card[data-look="theme"] .v-light { display: none; }
+:root[data-theme="dark"] .logo-card[data-look="theme"] .v-dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .logo-card[data-look="theme"] .v-light { display: none; }
+  :root:not([data-theme="light"]) .logo-card[data-look="theme"] .v-dark { display: block; }
+}
 .logo-stage-cta {
   position: absolute;
   left: 50%;
@@ -487,7 +499,7 @@ a { color: inherit; }
 .look-dot:hover { transform: scale(1.15); }
 .look-dot[data-look="theme"] { background: linear-gradient(135deg, #fff 50%, #161616 50%); }
 .look-dot[data-look="light"] { background: #fff; }
-.look-dot[data-look="dark"] { background: #000; }
+.look-dot[data-look="dark"] { background: var(--dark-bg, #000); }
 .look-dot[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
 
 .logo-card-foot {

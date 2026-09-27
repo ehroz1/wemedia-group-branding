@@ -2,7 +2,7 @@
 
 Сайт, где собраны логотипы и фирменные шрифты всех медиаплатформ группы:
 WE media group, WE project (weproject.media, Creative Asia), THE TECH,
-Город 24, OFFICE.
+Город 24, OFFICE, edubridge.
 
 На сайте можно:
 
