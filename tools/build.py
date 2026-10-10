@@ -89,7 +89,7 @@ BRANDS = [
             {"id": "gorod24", "name": "Город 24", "src": "gorod24.eps"},
         ],
         "fonts": [
-            {"family": "Bravo RG", "dir": ".", "glob": "BravoRG.otf", "license": "commercial"},
+            {"family": "Bravo Pro", "dir": ".", "glob": "BravoPro.otf", "license": "commercial"},
         ],
     },
     {
