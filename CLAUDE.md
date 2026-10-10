@@ -12,4 +12,5 @@
   свои версии цвета/фоны — ключи `fg`, `bg`, `variants` (пример — edubridge),
   (растровый исходник — ещё и в `TRACE`); шаблоны для видео — ключ `video`
   (файлы в source/video/<бренд>/).
-- Franklin Gothic, Bravo Pro и Gotham Pro — коммерческие шрифты, остальные — OFL.
+- Franklin Gothic и Gotham Pro — коммерческие шрифты; Bravo Pro — бесплатный
+  (автор раздаёт свободно, `license: "free"`), остальные — OFL.
